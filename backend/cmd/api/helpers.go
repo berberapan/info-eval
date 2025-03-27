@@ -14,7 +14,9 @@ func (app *application) writeJSON(w http.ResponseWriter, status int, data jsonEn
 		return err
 	}
 	js = append(js, '\n')
+
 	maps.Copy(w.Header(), headers)
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	w.Write(js)
