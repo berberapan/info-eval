@@ -68,6 +68,7 @@ func TestWriteJSON(t *testing.T) {
 			wantErr:    false,
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			w := httptest.NewRecorder()
@@ -106,11 +107,42 @@ func TestReadJSON(t *testing.T) {
 			expectedErr:   errors.New("body only allowed to contain one JSON value"),
 			expectedValue: "eval",
 		},
+		{
+			name:          "JSON syntax error",
+			data:          "{\"info\": \"eval\",}",
+			expectedErr:   errors.New("body contains badly-formed JSON (at character 17)"),
+			expectedValue: "",
+		},
+		{
+			name:          "Unexpected EOF",
+			data:          "{\"info\": \"eval\"",
+			expectedErr:   errors.New("body contains badly-formed JSON"),
+			expectedValue: "",
+		},
+		{
+			name:          "Unmarshal type error",
+			data:          "{\"info\": 1}",
+			expectedErr:   errors.New("body contains incorrect JSON type for field \"info\""),
+			expectedValue: "",
+		},
+		{
+			name:          "Empty data",
+			data:          "",
+			expectedErr:   errors.New("body is empty"),
+			expectedValue: "",
+		},
+		{
+			name:          "Unknown field",
+			data:          "{\"ingetalls\": \"va\"}",
+			expectedErr:   errors.New("body contains unknown key \"ingetalls\""),
+			expectedValue: "",
+		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			type ts struct {
-				Info any `json:"info"`
+				Info string `json:"info"`
 			}
 			var data ts
 			w := httptest.NewRecorder()
@@ -118,11 +150,15 @@ func TestReadJSON(t *testing.T) {
 
 			err := app.readJSON(w, r, &data)
 			if err != nil {
-				assert.Equal(t, err.Error(), tt.expectedErr.Error())
+				if tt.expectedErr == nil {
+					t.Errorf("Expected no error, got: %v", err)
+				} else {
+					assert.Equal(t, err.Error(), tt.expectedErr.Error())
+				}
 			} else {
 				assert.Equal(t, err, tt.expectedErr)
 			}
-			assert.Equal(t, data.Info, tt.expectedValue)
+			assert.Equal(t, data.Info, tt.expectedValue.(string))
 		})
 	}
 }
