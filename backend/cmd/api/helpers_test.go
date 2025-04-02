@@ -1,16 +1,18 @@
 package main
 
 import (
+	"errors"
 	"io"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/berberapan/info-eval/internal/assert"
 )
 
-func TestApplication_writeJSON(t *testing.T) {
+func TestWriteJSON(t *testing.T) {
 	app := &application{
 		logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
 	}
@@ -78,6 +80,49 @@ func TestApplication_writeJSON(t *testing.T) {
 			}
 			assert.Equal(t, len(w.Header().Get("X-Custom")), len(tt.wantHeader))
 			assert.Equal(t, w.Header().Get("X-Custom"), tt.wantHeader)
+		})
+	}
+}
+
+func TestReadJSON(t *testing.T) {
+	app := &application{
+		logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
+	}
+	tests := []struct {
+		name          string
+		data          any
+		expectedErr   error
+		expectedValue any
+	}{
+		{
+			name:          "Valid JSON, decoding fine",
+			data:          "{\"info\": \"eval\"}",
+			expectedErr:   nil,
+			expectedValue: "eval",
+		},
+		{
+			name:          "Double JSON",
+			data:          "{\"info\": \"eval\"}{\"info\": \"eval\"}",
+			expectedErr:   errors.New("body only allowed to contain one JSON value"),
+			expectedValue: "eval",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			type ts struct {
+				Info any `json:"info"`
+			}
+			var data ts
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest(http.MethodGet, "/", strings.NewReader(tt.data.(string)))
+
+			err := app.readJSON(w, r, &data)
+			if err != nil {
+				assert.Equal(t, err.Error(), tt.expectedErr.Error())
+			} else {
+				assert.Equal(t, err, tt.expectedErr)
+			}
+			assert.Equal(t, data.Info, tt.expectedValue)
 		})
 	}
 }

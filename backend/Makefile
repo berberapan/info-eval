@@ -37,3 +37,21 @@ db/migrations/new:
 db/migrations/up: confirm
 	@echo "Running up migrations.."
 	@migrate -path ./migrations/ -database ${DB_DSN} up
+
+# _______ QUALITY CONTROL ___
+
+.PHONY: tidy
+## tidy: tidy, verifying and vendoring module dependencies
+tidy:
+	@echo "Tidying module dependencies.."
+	go mod tidy
+	@echo "Verifying and vendoring.."
+	go mod verify
+	go mod vendor
+
+.PHONY: test
+## test: run tests
+test:
+	@echo "Running tests.."
+	go test -v ./...
+
