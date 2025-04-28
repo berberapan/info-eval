@@ -38,6 +38,12 @@ db/migrations/up: confirm
 	@echo "Running up migrations.."
 	@migrate -path ./migrations/ -database ${DB_DSN} up
 
+.PHONY: db/migrations/down
+## db/migrations/down: apply down migrations for the database
+db/migrations/down: confirm
+	@echo "Running down migrations.."
+	@migrate -path ./migrations/ -database ${DB_DSN} down
+
 # _______ QUALITY CONTROL ___
 
 .PHONY: tidy
