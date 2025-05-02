@@ -9,6 +9,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/berberapan/info-eval/internal/data"
 	"github.com/berberapan/info-eval/internal/vcs"
 	_ "github.com/lib/pq"
 )
@@ -18,6 +19,7 @@ var version = vcs.Version()
 type application struct {
 	config config
 	logger *slog.Logger
+	models data.Models
 }
 
 type config struct {
