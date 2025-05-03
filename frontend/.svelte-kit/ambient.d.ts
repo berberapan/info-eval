@@ -30,6 +30,7 @@ declare module '$env/static/private' {
 	export const npm_command: string;
 	export const npm_config_userconfig: string;
 	export const npm_config_cache: string;
+	export const NVM_INC: string;
 	export const TERM_PROGRAM_VERSION: string;
 	export const TMUX: string;
 	export const _P9K_TTY: string;
@@ -55,6 +56,7 @@ declare module '$env/static/private' {
 	export const SSH_CONNECTION: string;
 	export const INIT_CWD: string;
 	export const npm_lifecycle_script: string;
+	export const NVM_DIR: string;
 	export const npm_config_npm_version: string;
 	export const XDG_SESSION_CLASS: string;
 	export const TERM: string;
@@ -64,6 +66,7 @@ declare module '$env/static/private' {
 	export const TMUX_PANE: string;
 	export const npm_lifecycle_event: string;
 	export const SHLVL: string;
+	export const NVM_CD_FLAGS: string;
 	export const _P9K_SSH_TTY: string;
 	export const XDG_SESSION_ID: string;
 	export const npm_config_user_agent: string;
@@ -78,6 +81,7 @@ declare module '$env/static/private' {
 	export const npm_config_node_gyp: string;
 	export const DBUS_SESSION_BUS_ADDRESS: string;
 	export const npm_config_global_prefix: string;
+	export const NVM_BIN: string;
 	export const MAIL: string;
 	export const SSH_TTY: string;
 	export const ENVMAN_LOAD: string;
@@ -121,6 +125,7 @@ declare module '$env/dynamic/private' {
 		npm_command: string;
 		npm_config_userconfig: string;
 		npm_config_cache: string;
+		NVM_INC: string;
 		TERM_PROGRAM_VERSION: string;
 		TMUX: string;
 		_P9K_TTY: string;
@@ -146,6 +151,7 @@ declare module '$env/dynamic/private' {
 		SSH_CONNECTION: string;
 		INIT_CWD: string;
 		npm_lifecycle_script: string;
+		NVM_DIR: string;
 		npm_config_npm_version: string;
 		XDG_SESSION_CLASS: string;
 		TERM: string;
@@ -155,6 +161,7 @@ declare module '$env/dynamic/private' {
 		TMUX_PANE: string;
 		npm_lifecycle_event: string;
 		SHLVL: string;
+		NVM_CD_FLAGS: string;
 		_P9K_SSH_TTY: string;
 		XDG_SESSION_ID: string;
 		npm_config_user_agent: string;
@@ -169,6 +176,7 @@ declare module '$env/dynamic/private' {
 		npm_config_node_gyp: string;
 		DBUS_SESSION_BUS_ADDRESS: string;
 		npm_config_global_prefix: string;
+		NVM_BIN: string;
 		MAIL: string;
 		SSH_TTY: string;
 		ENVMAN_LOAD: string;
