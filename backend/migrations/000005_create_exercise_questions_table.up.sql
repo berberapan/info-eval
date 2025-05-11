@@ -1,5 +1,3 @@
-CREATE TYPE IF NOT EXISTS exercise_type AS ENUM ('free_text', 'true_false', 'multiple_choice');
-
 CREATE TABLE IF NOT EXISTS exercise_questions (
     id UUID PRIMARY KEY,
     exercise_id UUID REFERENCES exercises(id) ON DELETE CASCADE,
