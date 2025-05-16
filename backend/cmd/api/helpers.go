@@ -8,6 +8,9 @@ import (
 	"maps"
 	"net/http"
 	"strings"
+
+	"github.com/google/uuid"
+	"github.com/julienschmidt/httprouter"
 )
 
 type jsonEnvelope map[string]any
@@ -66,4 +69,13 @@ func (app *application) readJSON(w http.ResponseWriter, r *http.Request, data an
 		return errors.New("body only allowed to contain one JSON value")
 	}
 	return nil
+}
+
+func (app *application) readIDParam(r *http.Request) (uuid.UUID, error) {
+	params := httprouter.ParamsFromContext(r.Context())
+	id, err := uuid.Parse(params.ByName("id"))
+	if err != nil {
+		return uuid.Nil, errors.New("invalid id parameter")
+	}
+	return id, nil
 }

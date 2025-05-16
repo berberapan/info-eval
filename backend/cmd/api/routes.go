@@ -14,5 +14,9 @@ func (app *application) routes() http.Handler {
 
 	router.HandlerFunc(http.MethodGet, "/v1/healthcheck", app.healthcheckHandler)
 
-	return app.recoverPanic(router)
+	router.HandlerFunc(http.MethodGet, "/v1/scenario/:id", app.showScenarioHandler)
+	router.HandlerFunc(http.MethodGet, "/v1/scenarios", app.showScenariosHandler)
+	router.HandlerFunc(http.MethodPost, "/v1/scenarios", app.createScenarioHandler)
+
+	return app.recoverPanic(app.enableCORS(router))
 }

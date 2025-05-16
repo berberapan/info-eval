@@ -1,1 +1,3 @@
 DROP TABLE IF EXISTS scenarios;
+
+DROP EXTENSION IF EXISTS "pgcrypto";
