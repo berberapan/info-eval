@@ -16,7 +16,11 @@ func (app *application) routes() http.Handler {
 
 	router.HandlerFunc(http.MethodGet, "/v1/scenario/:id", app.showScenarioHandler)
 	router.HandlerFunc(http.MethodGet, "/v1/scenarios", app.showScenariosHandler)
-	router.HandlerFunc(http.MethodPost, "/v1/scenarios", app.createScenarioHandler)
+	router.HandlerFunc(http.MethodPost, "/v1/scenarios", app.requireAuthenticatedUser(http.HandlerFunc(app.createScenarioHandler)))
 
-	return app.recoverPanic(app.enableCORS(router))
+	router.HandlerFunc(http.MethodPost, "/v1/users", app.requireAuthenticatedUser(http.HandlerFunc(app.registerUserHandle)))
+
+	router.HandlerFunc(http.MethodPost, "/v1/authentication", app.createAuthenticationTokenHandler)
+
+	return app.recoverPanic(app.enableCORS(app.authenticate(router)))
 }

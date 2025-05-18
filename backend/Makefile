@@ -17,7 +17,7 @@ confirm:
 .PHONY: run/api
 ## run/api: runs the cmd/api application
 run/api:
-	@go run ./cmd/api -db-dsn=${DB_DSN}
+	@go run ./cmd/api -db-dsn=${DB_DSN} -jwt-secret=${JWT_SECRET}
 
 .PHONY: db/psql
 ## db/psql: connect to the docker container with the database

@@ -15,12 +15,18 @@ var (
 	ErrDuplicateEmail = errors.New("duplicate email")
 )
 
+var AnonymousUser = &User{}
+
 type User struct {
 	ID        uuid.UUID `json:"id"`
 	Email     string    `json:"email"`
 	Password  password  `json:"-"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+}
+
+func (u *User) IsAnonymous() bool {
+	return u == AnonymousUser
 }
 
 type password struct {
@@ -80,8 +86,7 @@ func (um *UserModel) Insert(user *User) error {
 	query := `
 	INSERT INTO users (email, password_hash)
 	VALUES ($1, $2)
-	RETURNING id, created_at, updated_at
-	`
+	RETURNING id, created_at, updated_at`
 	args := []any{user.Email, user.Password.hash}
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -95,4 +100,57 @@ func (um *UserModel) Insert(user *User) error {
 		}
 	}
 	return nil
+}
+
+func (um *UserModel) Get(id uuid.UUID) (*User, error) {
+	query := `
+	SELECT id, email, password_hash, created_at, updated_at
+	FROM users
+	WHERE id = $1`
+	var user User
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	err := um.DB.QueryRowContext(ctx, query, id).Scan(
+		&user.ID,
+		&user.Email,
+		&user.Password.hash,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	)
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, ErrRecordNotFound
+		default:
+			return nil, err
+		}
+	}
+	return &user, nil
+
+}
+
+func (um *UserModel) GetByEmail(email string) (*User, error) {
+	query := `
+	SELECT id, email, password_hash, created_at, updated_at
+	FROM users
+	WHERE email = $1`
+	var user User
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	err := um.DB.QueryRowContext(ctx, query, email).Scan(
+		&user.ID,
+		&user.Email,
+		&user.Password.hash,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	)
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, ErrRecordNotFound
+		default:
+			return nil, err
+		}
+	}
+	return &user, nil
 }
