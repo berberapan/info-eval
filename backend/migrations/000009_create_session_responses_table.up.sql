@@ -3,5 +3,5 @@ CREATE TABLE IF NOT EXISTS session_responses (
     scenario_session_id UUID REFERENCES scenario_sessions(id) ON DELETE CASCADE,
     submitted_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     raw_answers JSONB,
-    ai_feedback TEXT
+    ai_feedback JSONB
 );

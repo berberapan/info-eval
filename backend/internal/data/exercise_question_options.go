@@ -25,8 +25,7 @@ func (qm *QuestionOptionModel) GetByQuestionID(questionID uuid.UUID) ([]Question
 	query := `
 	SELECT id, option_text, is_correct, feedback, created_at, updated_at
 	FROM exercise_question_options
-	WHERE exercise_question_id = $1
-	`
+	WHERE exercise_question_id = $1`
 	var questionOptionSlice []QuestionOption
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()

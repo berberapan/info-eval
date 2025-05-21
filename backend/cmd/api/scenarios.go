@@ -76,3 +76,25 @@ func (app *application) createScenarioHandler(w http.ResponseWriter, r *http.Req
 		app.serverErrorResponse(w, r, err)
 	}
 }
+
+func (app *application) getScenarioIDHandler(w http.ResponseWriter, r *http.Request) {
+	sessionID, err := app.readIDParam(r)
+	if err != nil {
+		app.notFoundResponse(w, r)
+		return
+	}
+	scenarioID, err := app.models.ScenarioSessions.GetScenarioByID(sessionID)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			app.notFoundResponse(w, r)
+		default:
+			app.serverErrorResponse(w, r, err)
+		}
+		return
+	}
+	err = app.writeJSON(w, http.StatusOK, jsonEnvelope{"scenario_id": scenarioID}, nil)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
+}

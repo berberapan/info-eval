@@ -39,6 +39,9 @@ type config struct {
 	jwt struct {
 		secret string
 	}
+	ai struct {
+		key string
+	}
 }
 
 func main() {
@@ -59,6 +62,7 @@ func main() {
 	})
 
 	flag.StringVar(&cfg.jwt.secret, "jwt-secret", "", "JWT Secret")
+	flag.StringVar(&cfg.ai.key, "gemini-key", "", "API key for Gemini")
 
 	flag.Parse()
 

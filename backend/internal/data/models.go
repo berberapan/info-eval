@@ -34,7 +34,8 @@ type Models struct {
 	ExerciseMedia     ExerciseMediaModel
 	ExerciseQuestions ExerciseQuestionModel
 	QuestionOptions   QuestionOptionModel
-	ScenarioTokens    ScenarioTokenModel
+	ScenarioSessions  ScenarioSessionModel
+	SessionResponses  SessionResponseModel
 	Users             UserModel
 }
 
@@ -44,7 +45,8 @@ func NewModels(db *sql.DB) Models {
 		ExerciseMedia:     ExerciseMediaModel{DB: db},
 		ExerciseQuestions: ExerciseQuestionModel{DB: db},
 		QuestionOptions:   QuestionOptionModel{DB: db},
-		ScenarioTokens:    ScenarioTokenModel{DB: db},
+		ScenarioSessions:  ScenarioSessionModel{DB: db},
+		SessionResponses:  SessionResponseModel{DB: db},
 		Users:             UserModel{DB: db},
 	}
 	models.Scenarios = ScenarioModel{

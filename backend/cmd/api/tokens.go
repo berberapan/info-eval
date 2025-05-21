@@ -60,9 +60,36 @@ func (app *application) createAuthenticationTokenHandler(w http.ResponseWriter, 
 		app.serverErrorResponse(w, r, err)
 		return
 	}
-	err = app.writeJSON(w, http.StatusCreated, jsonEnvelope{"authentication_token": string(jwtBytes)}, nil)
+	cookie := http.Cookie{
+		Name:     "token",
+		Value:    string(jwtBytes),
+		Path:     "/",
+		Expires:  time.Now().Add(12 * time.Hour),
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+	}
+	http.SetCookie(w, &cookie)
+
+	err = app.writeJSON(w, http.StatusCreated, jsonEnvelope{"message": "authentication successful", "user_id": user.ID.String()}, nil)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 	}
+}
 
+func (app *application) removeAuthenticationTokenHandler(w http.ResponseWriter, r *http.Request) {
+	cookie := http.Cookie{
+		Name:     "token",
+		Value:    "",
+		Path:     "/",
+		Expires:  time.Unix(0, 0),
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+	}
+	http.SetCookie(w, &cookie)
+	err := app.writeJSON(w, http.StatusOK, jsonEnvelope{"message": "authentication cleared"}, nil)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
 }

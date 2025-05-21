@@ -32,8 +32,7 @@ func (em *ExerciseMediaModel) GetByExerciseID(exerciseID uuid.UUID) ([]ExerciseM
 	query := `
 	SELECT id, media_url, media_type, created_at, updated_at
 	FROM exercise_media
-	WHERE exercise_id = $1
-	`
+	WHERE exercise_id = $1`
 	var mediaLSlice []ExerciseMedia
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
