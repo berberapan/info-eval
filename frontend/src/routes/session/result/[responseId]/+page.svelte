@@ -3,27 +3,22 @@
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
 
-  // State variables
   let scenarioDetails = null; // To store the full scenario structure (exercises, questions, options)
   let sessionResponseData = null; // To store the specific student's response (raw_answers, ai_feedback)
-  
   let isLoading = true;
   let error = null;
   let currentResponseIdFromUrl = null;
 
-  // API URLs - ensure these match your backend routes
-  const SCENARIO_DETAIL_API_URL = 'http://localhost:9000/v1/scenario/'; // GET /v1/scenario/{scenario_id}
-  const SESSION_DETAILS_API_URL = 'http://localhost:9000/v1/sessions/';    // GET /v1/sessions/{scenario_session_id}/scenario (to get scenario_id)
-  const SESSION_RESPONSE_API_URL = 'http://localhost:9000/v1/session-responses/'; // GET /v1/session-responses/{response_id}
+  const SCENARIO_DETAIL_API_URL = 'http://localhost:9000/v1/scenario/'; 
+  const SESSION_DETAILS_API_URL = 'http://localhost:9000/v1/sessions/';
+  const SESSION_RESPONSE_API_URL = 'http://localhost:9000/v1/session-responses/';
 
   async function fetchData(responseId) {
     isLoading = true;
     error = null;
     scenarioDetails = null;
     sessionResponseData = null;
-
     try {
-      // --- Step 1: Fetch the specific session response by its ID ---
       const resResponse = await fetch(`${SESSION_RESPONSE_API_URL}${responseId}`);
       if (!resResponse.ok) {
         const errData = await resResponse.json().catch(() => ({ error: `API Error: ${resResponse.status} - ${resResponse.statusText}` }));
@@ -32,16 +27,12 @@
       const fetchedSessionResponseContainer = await resResponse.json();
       // Backend returns {"session_response": {...}}
       sessionResponseData = fetchedSessionResponseContainer.session_response;
-
       if (!sessionResponseData || !sessionResponseData.id) {
         throw new Error("Invalid session response data or missing response ID.");
       }
       if (!sessionResponseData.scenario_session_id) {
           throw new Error("Missing scenario_session_id in session response data.");
       }
-
-      // --- Step 2: Fetch the scenario_id using the scenario_session_id from the response ---
-      // This endpoint GET /v1/sessions/{id}/scenario should return { scenario_id: "..." }
       const scenarioSessionDetailsRes = await fetch(`${SESSION_DETAILS_API_URL}${sessionResponseData.scenario_session_id}/scenario`);
       if (!scenarioSessionDetailsRes.ok) {
           const errData = await scenarioSessionDetailsRes.json().catch(() => ({ error: `API Error: ${scenarioSessionDetailsRes.status} - ${scenarioSessionDetailsRes.statusText}` }));
@@ -49,13 +40,9 @@
       }
       const scenarioSessionDetails = await scenarioSessionDetailsRes.json();
       const scenarioId = scenarioSessionDetails.scenario_id; // Assuming backend returns { "scenario_id": "..." }
-
       if (!scenarioId) {
         throw new Error("Scenario ID not found in session details from API.");
       }
-
-      // --- Step 3: Fetch the full scenario structure using the scenario_id ---
-      // This endpoint GET /v1/scenario/{id} should return { "scenario": { ... } }
       const scenarioRes = await fetch(`${SCENARIO_DETAIL_API_URL}${scenarioId}`);
       if (!scenarioRes.ok) {
         const errData = await scenarioRes.json().catch(() => ({ error: `API Error: ${scenarioRes.status} - ${scenarioRes.statusText}` }));
@@ -63,15 +50,12 @@
       }
       const fetchedScenarioContainer = await scenarioRes.json();
       scenarioDetails = fetchedScenarioContainer.scenario; // Assuming backend returns { "scenario": { ... } }
-
       if (!scenarioDetails) {
         throw new Error("Scenario details not found in API response.");
       }
-      // Sort exercises if they exist
        if (scenarioDetails.exercises && scenarioDetails.exercises.length > 0) {
           scenarioDetails.exercises.sort((a, b) => a.order - b.order);
       }
-
     } catch (e) {
       console.error("Error fetching results data:", e);
       error = e.message || "An unknown error occurred while fetching results.";
@@ -90,19 +74,14 @@
     }
   });
 
-  // Helper function to get the student's answer for a specific question ID
   function getStudentAnswer(questionId) {
-    // raw_answers is expected to be a map: { "question_uuid": "answer_text_or_option_uuid", ... }
     return sessionResponseData?.raw_answers?.[questionId];
   }
 
-  // Helper function to get the AI feedback for a specific question ID
   function getAIFeedback(questionId) {
-    // ai_feedback is expected to be a map: { "question_uuid": "feedback_text", ... }
     return sessionResponseData?.ai_feedback?.[questionId];
   }
 
-  // Helper function to find a specific option by its ID from a list of options
   function getOptionById(options, optionId) {
     if (!options || !optionId) return null;
     return options.find(opt => opt.id === optionId);
@@ -212,7 +191,6 @@
   {:else}
     <div class="text-center py-10 card bg-base-100 shadow-xl p-6">
       <p class="text-xl text-base-content mb-4">Kunde inte ladda resultatdata. Kontrollera att ID är korrekt och försök igen.</p>
-      <button on:click={() => goto('/uppgifter')} class="btn btn-primary">Tillbaka till uppgiftslistan</button>
     </div>
   {/if}
 </div>

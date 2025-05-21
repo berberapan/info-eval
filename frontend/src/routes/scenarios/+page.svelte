@@ -1,30 +1,23 @@
 <script>
   import { onMount } from 'svelte';
-  import { goto } from '$app/navigation'; // Ensure goto is imported
-
-  // Import the authStore and the client-side auth check function
-  import { authStore, checkAuthClient } from '$lib/stores/auth'; // Adjust path as needed
+  import { goto } from '$app/navigation'; 
+  import { authStore, checkAuthClient } from '$lib/stores/auth'; 
 
   let scenarios = [];
-  let isLoading = true; // To show a loading state for fetching scenarios
-  let error = null; // To display any errors
-  let magicLinkInfo = null; // To store and display the generated magic link/session info
-  let isSending = {}; // To track loading state for each "Skicka" (Send) button: { [scenarioId]: boolean }
+  let isLoading = true; 
+  let error = null; 
+  let magicLinkInfo = null; 
+  let isSending = {}; 
 
-  // API Endpoints
   const SCENARIOS_API_URL = 'http://localhost:9000/v1/scenarios';
-  const SESSIONS_API_URL = 'http://localhost:9000/v1/sessions'; // Backend endpoint for creating sessions
+  const SESSIONS_API_URL = 'http://localhost:9000/v1/sessions'; 
 
-  /**
-   * Fetches the list of scenarios from the backend.
-   */
   async function fetchScenarios() {
     isLoading = true;
     error = null;
-    magicLinkInfo = null; // Clear any previous magic link info when refetching scenarios
+    magicLinkInfo = null; 
     try {
       const response = await fetch(SCENARIOS_API_URL);
-
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ message: response.statusText }));
         throw new Error(`HTTP error! Status: ${response.status} - ${errorData.message || 'Failed to fetch scenarios'}`);
@@ -38,68 +31,44 @@
       }
     } catch (e) {
       console.error("Failed to fetch scenarios:", e);
-      error = `Kunde inte ladda scenarier: ${e.message}`;
+      error = `Kunde inte ladda övningar: ${e.message}`;
       scenarios = [];
     } finally {
       isLoading = false;
     }
   }
-
   onMount(async () => {
-    // Ensure auth status is checked first
     await checkAuthClient();
-    // Then fetch scenarios
     await fetchScenarios();
   });
 
-  /**
-   * Placeholder function for navigating to an edit scenario page.
-   */
-  function editScenario(id) {
-    console.log("Edit scenario with ID:", id);
-    // Replace with actual navigation if/when edit page exists
-    // goto(`/teacher/scenarios/edit/${id}`); 
-    alert(`Redigera scenario: ${id} (funktion ej implementerad)`);
-  }
-
-  /**
-   * Creates a new scenario session (magic link) for the given scenario ID.
-   */
   async function sendScenario(scenarioId) {
     isSending = { ...isSending, [scenarioId]: true };
     magicLinkInfo = null; // Clear previous link first
-
     if ($authStore.isLoading) {
       await new Promise(resolve => setTimeout(resolve, 100));
     }
-
     if (!$authStore.isAuthenticated) {
       error = "Du måste vara inloggad för att skapa en delningslänk. Vänligen logga in.";
       isSending = { ...isSending, [scenarioId]: false };
       await checkAuthClient();
       return;
     }
-    
-    error = null; // Clear previous error
-
+    error = null; 
     try {
       const payload = {
         scenario_id: scenarioId,
         notes: `Session skapad för scenario ${scenarioId} den ${new Date().toLocaleString()}`,
-        validity_duration_hours: 24 // Or make this configurable
+        validity_duration_hours: 24 
       };
-
       const response = await fetch(SESSIONS_API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // Authorization header might be needed if your backend requires it for this endpoint
-          // 'Authorization': `Bearer ${$authStore.token}` 
         },
-        credentials: 'include', // Important for sending cookies if your auth relies on them
+        credentials: 'include', 
         body: JSON.stringify(payload)
       });
-
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ message: response.statusText }));
         let errorMessage = `HTTP error! Status: ${response.status}`;
@@ -114,49 +83,37 @@
         }
         if (response.status === 401 || response.status === 403) {
             errorMessage += " Din session kan ha gått ut, vänligen logga in igen.";
-            await checkAuthClient(); // Re-check auth status
+            await checkAuthClient(); 
         }
         throw new Error(errorMessage);
       }
-
       const result = await response.json();
-
       if (result && result.scenario_session) {
         const session = result.scenario_session;
-        // Student link (for students to take the scenario)
         const studentLink = `${window.location.origin}/session/${session.id}`;
-        // Teacher results link for this specific session
         const teacherResultsLink = `${window.location.origin}/teacher/session-results/${session.id}`;
-
-
         magicLinkInfo = {
-          id: session.id, // This is the scenario_session_id
-          token: session.token, // The magic link token (if you display it, be careful)
+          id: session.id, 
+          token: session.token, 
           expiresAt: new Date(session.expires_at).toLocaleString(),
           studentLink: studentLink,
-          teacherResultsLink: teacherResultsLink, // New link for teacher
+          teacherResultsLink: teacherResultsLink, 
           scenarioTitle: scenarios.find(s => s.id === scenarioId)?.title || scenarioId,
-          message: `Magisk länk skapad för scenario: '${scenarios.find(s => s.id === scenarioId)?.title || scenarioId}'!`
+          message: `Magic link skapad för övning: '${scenarios.find(s => s.id === scenarioId)?.title || scenarioId}'!`
         };
         error = null; 
       } else {
         throw new Error("Session data not found or malformed in API response.");
       }
-
     } catch (e) {
       console.error("Failed to create magic link:", e);
-      error = `Kunde inte skapa magisk länk: ${e.message}`;
+      error = `Kunde inte skapa magic link: ${e.message}`;
       magicLinkInfo = null;
     } finally {
       isSending = { ...isSending, [scenarioId]: false };
     }
   }
-
-  function createNewScenario() {
-    // goto('/teacher/scenarios/create'); // Example navigation
-    alert("Skapa nytt scenario (funktion ej implementerad)");
-  }
-
+  
   function getDifficultyText(level) {
     switch (level) {
       case 1: return "1";
@@ -168,7 +125,7 @@
 
   function copyToClipboard(text) {
     navigator.clipboard.writeText(text).then(() => {
-      alert('Länk kopierad till urklipp!');
+      alert('Länk kopierad!');
     }).catch(err => {
       console.error('Kunde inte kopiera text: ', err);
       alert('Kunde inte kopiera länk. Försök manuellt.');

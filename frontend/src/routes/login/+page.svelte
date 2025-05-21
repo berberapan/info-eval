@@ -9,7 +9,6 @@
   async function handleLogin(): Promise<void> {
     isLoading = true;
     errorMessage = "";
-
     try {
       const response = await fetch('http://localhost:9000/v1/authentication', {
         method: 'POST',
@@ -17,7 +16,6 @@
         credentials: 'include', 
         body: JSON.stringify({ email, password })
       });
-
       if (response.ok) {
         goto('/scenarios'); 
       } else {

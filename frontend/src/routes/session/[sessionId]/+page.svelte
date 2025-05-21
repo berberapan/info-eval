@@ -3,23 +3,17 @@
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
 
-  // Reactive variables
   let scenarioData = null;
   let currentExerciseIndex = 0;
   let isLoading = true;
   let error = null;
   let selectedLeftTab = 0; 
-
-  // Holds user's answers for ALL questions across ALL exercises
-  let allScenarioAnswers = {}; // Changed from 'answers' to reflect it holds all answers
-
-  // Submission state variables for the FINAL submission
+  let allScenarioAnswers = {}; 
   let isSubmittingFinalAnswers = false;
   let finalSubmissionError = null;
-  let finalSubmissionSuccessMessage = null; // Will mainly be for navigation indication
+  let finalSubmissionSuccessMessage = null; 
   let lastSubmittedResponseId = null; 
 
-  // API URLs
   const BASE_API_URL = 'http://localhost:9000/v1/scenario/'; 
   const SESSION_API_URL = 'http://localhost:9000/v1/sessions/'; 
   
@@ -27,7 +21,7 @@
     isLoading = true;
     error = null;
     scenarioData = null;
-    allScenarioAnswers = {}; // Reset all answers when fetching new scenario
+    allScenarioAnswers = {}; 
     finalSubmissionError = null; 
     finalSubmissionSuccessMessage = null;
     lastSubmittedResponseId = null;
@@ -78,39 +72,36 @@
       try {
         data = await scenarioResponse.json();
       } catch (e) {
-        throw new Error("Kunde inte tolka scenariosvar från API. Förväntade JSON.");
+        throw new Error("Kunde inte tolka övningssvar från API. Förväntade JSON.");
       }
       if (data && data.scenario) {
         scenarioData = data.scenario;
       } else if (data && !data.scenario) {
         scenarioData = data; 
       } else {
-        throw new Error("Scenariodata är inte i det förväntade formatet eller saknas i API-svaret.");
+        throw new Error("Övningsdata är inte i det förväntade formatet eller saknas i API-svaret.");
       }
       if (scenarioData.exercises && scenarioData.exercises.length > 0) {
         scenarioData.exercises.sort((a, b) => a.order - b.order);
       }
-      initializeAnswersForScenario(); // Initialize all answers once
+      initializeAnswersForScenario(); 
 
     } catch (e) {
-      error = e.message || "Ett okänt fel uppstod vid hämtning av scenario.";
+      error = e.message || "Ett okänt fel uppstod vid hämtning av övningen.";
       scenarioData = null;
     } finally {
       isLoading = false;
     }
   }
 
-  // Initialize answers for ALL questions in the scenario if not already set
   function initializeAnswersForScenario() {
     if (scenarioData && scenarioData.exercises) {
       scenarioData.exercises.forEach(exercise => {
         if (exercise.questions) {
           exercise.questions.forEach(q => {
-            // Only initialize if not already present (e.g., if user navigates back and forth)
             if (allScenarioAnswers[q.id] === undefined) {
                  allScenarioAnswers[q.id] = q.type === 'free_text' ? '' : null;
             }
-            // Remove any local feedback properties, as feedback is on results page
             delete q.submittedFeedback; 
             delete q.wasCorrect;      
             delete q.aiFeedbackText; 
@@ -118,16 +109,12 @@
         }
       });
     }
-    // Ensure component updates if allScenarioAnswers was modified
     allScenarioAnswers = { ...allScenarioAnswers };
   }
   
-  // This function is called when moving between exercises to reset tab, not answers
   function prepareCurrentExerciseDisplay() {
     selectedLeftTab = 0; 
-    // No longer clearing submission messages here as submission is only at the end
   }
-
 
   $: currentExercise = scenarioData?.exercises?.[currentExerciseIndex];
   $: currentMedia = currentExercise?.media;
@@ -150,7 +137,7 @@
 
     if (newIndex >= 0 && newIndex < numExercises) {
       currentExerciseIndex = newIndex;
-      prepareCurrentExerciseDisplay(); // Reset tab, but don't re-initialize/clear answers
+      prepareCurrentExerciseDisplay(); 
     }
   }
 
@@ -162,29 +149,22 @@
     allScenarioAnswers = { ...allScenarioAnswers, [questionId]: event.target.value };
   }
 
-  // This function is now only called on the LAST exercise
   async function submitFinalAnswers() {
     if (!isLastExercise || isSubmittingFinalAnswers) return;
-
     isSubmittingFinalAnswers = true;
     finalSubmissionError = null;
     finalSubmissionSuccessMessage = null;
-   
     const scenarioSessionId = $page.params.sessionId; 
     if (!scenarioSessionId) {
       finalSubmissionError = "Session ID saknas. Kan inte skicka svar.";
       isSubmittingFinalAnswers = false;
       return;
     }
-
-    // API endpoint for submitting answers
     const submitUrl = `${SESSION_API_URL}${scenarioSessionId}/responses`;
-
     try {
       const response = await fetch(submitUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // Send ALL accumulated answers
         body: JSON.stringify({ raw_answers: allScenarioAnswers }), 
       });
 
@@ -201,15 +181,12 @@
       if (responseData && responseData.session_response && responseData.session_response.id) {
         lastSubmittedResponseId = responseData.session_response.id; 
         finalSubmissionSuccessMessage = "Alla svar har skickats! Omdirigerar till resultatsidan...";
-        
-        // Navigate to results page
         setTimeout(() => {
             goto(`/session/result/${lastSubmittedResponseId}`);
         }, 1500); 
       } else {
         throw new Error("Kunde inte hämta ID för det skickade svaret från servern.");
       }
-      
     } catch (err) {
       console.error("Fel vid skickande av slutgiltiga svar:", err);
       finalSubmissionError = err.message || "Ett okänt fel uppstod när svaren skulle skickas.";
@@ -219,8 +196,6 @@
     }
   }
 
-  // Check if all questions IN THE ENTIRE SCENARIO have been answered
-  // This is for enabling the final submit button
   $: allQuestionsInScenarioAnswered = scenarioData && scenarioData.exercises && scenarioData.exercises.every(exercise => 
     exercise.questions && exercise.questions.every(q => {
       const answer = allScenarioAnswers[q.id];
@@ -242,7 +217,7 @@
   {#if isLoading}
     <div class="flex flex-col justify-center items-center h-96">
       <span class="loading loading-lg loading-spinner text-primary"></span>
-      <p class="mt-4 text-xl">Laddar scenario...</p>
+      <p class="mt-4 text-xl">Laddar övning...</p>
     </div>
   {:else if error}
     <div role="alert" class="alert alert-error">
@@ -250,7 +225,6 @@
       <span>Fel: {error}</span>
       <div class="flex gap-2 mt-4">
         <button on:click={() => fetchScenarioData($page.params.sessionId)} class="btn btn-sm btn-ghost">Försök igen</button>
-        <button on:click={() => goto('/uppgifter')} class="btn btn-sm btn-outline">Tillbaka till listan</button>
       </div>
     </div>
   {:else if scenarioData}

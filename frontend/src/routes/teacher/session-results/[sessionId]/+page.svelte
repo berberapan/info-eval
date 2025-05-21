@@ -2,21 +2,18 @@
   import { page } from '$app/stores';
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
-  import { authStore, checkAuthClient } from '$lib/stores/auth'; // For auth checks
+  import { authStore, checkAuthClient } from '$lib/stores/auth';
 
-  // State variables
-  let scenarioDetails = null;       // Full scenario structure (exercises, questions, options)
-  let sessionDetails = null;        // Details of the specific scenario_session
-  let allSessionResponses = [];   // Array of all student responses for this session
-  
+  let scenarioDetails = null;    
+  let sessionDetails = null; 
+  let allSessionResponses = [];
   let isLoading = true;
   let error = null;
   let currentScenarioSessionIdFromUrl = null;
 
-  // API URLs - ensure these match your backend routes
-  const SCENARIO_DETAIL_API_URL = 'http://localhost:9000/v1/scenario/';       // GET /v1/scenario/{scenario_id}
-  const SESSION_DETAIL_API_URL = 'http://localhost:9000/v1/sessions/';         // GET /v1/sessions/{scenario_session_id}
-  const SESSION_RESPONSES_API_URL = 'http://localhost:9000/v1/sessions/';    // GET /v1/sessions/{scenario_session_id}/responses
+  const SCENARIO_DETAIL_API_URL = 'http://localhost:9000/v1/scenario/';
+  const SESSION_DETAIL_API_URL = 'http://localhost:9000/v1/sessions/';
+  const SESSION_RESPONSES_API_URL = 'http://localhost:9000/v1/sessions/';
 
   async function fetchData(scenarioSessionId) {
     isLoading = true;
@@ -25,60 +22,44 @@
     sessionDetails = null;
     allSessionResponses = [];
 
-    // Ensure user is authenticated to view teacher results
     await checkAuthClient();
     if (!$authStore.isAuthenticated) {
       error = "Åtkomst nekad. Du måste vara inloggad som lärare för att se resultat.";
       isLoading = false;
-      // Optional: redirect to login
-      // goto('/login?redirect=/teacher/session-results/' + scenarioSessionId);
       return;
     }
-
     try {
-      // --- Step 1: Fetch ScenarioSession details (to get scenario_id and session notes/expiry) ---
       const sessionDetailRes = await fetch(`${SESSION_DETAIL_API_URL}${scenarioSessionId}`);
       if (!sessionDetailRes.ok) {
         const errData = await sessionDetailRes.json().catch(() => ({ error: `API Error: ${sessionDetailRes.status} - ${sessionDetailRes.statusText}` }));
         throw new Error(errData.error?.message || errData.error || `Failed to fetch session details: ${sessionDetailRes.statusText}`);
       }
       const fetchedSessionDetailContainer = await sessionDetailRes.json();
-      // Assuming backend returns {"scenario_session": {...}} for GET /v1/sessions/:id
       sessionDetails = fetchedSessionDetailContainer.scenario_session; 
-
       if (!sessionDetails || !sessionDetails.id || !sessionDetails.scenario_id) {
         throw new Error("Invalid session details data or missing scenario_id.");
       }
       const scenarioId = sessionDetails.scenario_id;
-
-      // --- Step 2: Fetch the full scenario structure using the scenario_id ---
       const scenarioRes = await fetch(`${SCENARIO_DETAIL_API_URL}${scenarioId}`);
       if (!scenarioRes.ok) {
         const errData = await scenarioRes.json().catch(() => ({ error: `API Error: ${scenarioRes.status} - ${scenarioRes.statusText}` }));
         throw new Error(errData.error?.message || errData.error || `Failed to fetch scenario structure: ${scenarioRes.statusText}`);
       }
       const fetchedScenarioContainer = await scenarioRes.json();
-      // Assuming backend returns {"scenario": {...}} for GET /v1/scenario/:id
       scenarioDetails = fetchedScenarioContainer.scenario; 
-
       if (!scenarioDetails) {
         throw new Error("Scenario structure not found in API response.");
       }
       if (scenarioDetails.exercises && scenarioDetails.exercises.length > 0) {
           scenarioDetails.exercises.sort((a, b) => a.order - b.order);
       }
-
-      // --- Step 3: Fetch all responses for this specific scenario_session_id ---
-      // This endpoint GET /v1/sessions/{id}/responses should return {"session_responses": [...]}
       const responsesRes = await fetch(`${SESSION_RESPONSES_API_URL}${scenarioSessionId}/responses`);
       if (!responsesRes.ok) {
         const errData = await responsesRes.json().catch(() => ({ error: `API Error: ${responsesRes.status} - ${responsesRes.statusText}` }));
         throw new Error(errData.error?.message || errData.error || `Failed to fetch session responses: ${responsesRes.statusText}`);
       }
       const fetchedResponsesContainer = await responsesRes.json();
-      // Assuming backend returns {"session_responses": [...]}
       allSessionResponses = fetchedResponsesContainer.session_responses || []; 
-
     } catch (e) {
       console.error("Error fetching teacher results data:", e);
       error = e.message || "An unknown error occurred while fetching results for this session.";
@@ -86,9 +67,8 @@
       isLoading = false;
     }
   }
-
   onMount(() => {
-    currentScenarioSessionIdFromUrl = $page.params.sessionId; // Matches the [sessionId] in the route
+    currentScenarioSessionIdFromUrl = $page.params.sessionId; 
     if (currentScenarioSessionIdFromUrl) {
       fetchData(currentScenarioSessionIdFromUrl);
     } else {
@@ -97,35 +77,29 @@
     }
   });
 
-  // Helper to get all answers for a specific question from all responses
   function getAnswersForQuestion(questionId) {
     if (!allSessionResponses || allSessionResponses.length === 0) return [];
     return allSessionResponses.map(response => ({
-      studentResponseId: response.id, // ID of the student's overall submission
+      studentResponseId: response.id, 
       answer: response.raw_answers ? response.raw_answers[questionId] : undefined,
       aiFeedback: response.ai_feedback ? response.ai_feedback[questionId] : undefined,
       submittedAt: response.submitted_at
-    })).filter(item => item.answer !== undefined); // Filter out if a student somehow didn't answer this specific question
+    })).filter(item => item.answer !== undefined); 
   }
-  
-  // Helper to find a specific option by its ID from a list of options
   function getOptionById(options, optionId) {
     if (!options || !optionId) return null;
     return options.find(opt => opt.id === optionId);
   }
-
-  // Helper to count occurrences of each option for multiple choice/true-false
   function getOptionCounts(question) {
       const answersForQ = getAnswersForQuestion(question.id);
       const counts = {};
       question.options.forEach(opt => counts[opt.id] = { text: opt.option_text, count: 0, is_correct: opt.is_correct });
-      
       answersForQ.forEach(ans => {
           if (ans.answer && counts[ans.answer]) {
               counts[ans.answer].count++;
           }
       });
-      return Object.values(counts); // Return as an array of objects
+      return Object.values(counts); 
   }
 
 </script>
@@ -144,7 +118,6 @@
         {#if error !== "Åtkomst nekad. Du måste vara inloggad som lärare för att se resultat."}
          <button on:click={() => fetchData(currentScenarioSessionIdFromUrl)} class="btn btn-sm btn-ghost">Försök igen</button>
         {/if}
-        <button on:click={() => goto('/uppgifter')} class="btn btn-sm btn-outline">Tillbaka till scenarielistan</button>
       </div>
     </div>
   {:else if scenarioDetails && sessionDetails && allSessionResponses}
@@ -238,8 +211,7 @@
     </div>
   {:else if !isLoading} 
     <div class="text-center py-10 card bg-base-100 shadow-xl p-6">
-      <p class="text-xl text-base-content mb-4">Kunde inte ladda all nödvändig data för resultatsidan. Kontrollera att sessionen och scenariot existerar.</p>
-      <button on:click={() => goto('/uppgifter')} class="btn btn-primary">Tillbaka till Scenarielistan</button>
+      <p class="text-xl text-base-content mb-4">Kunde inte ladda all nödvändig data för resultatsidan. Kontrollera att sessionen och övningen existerar.</p>
     </div>
   {/if}
 </div>
