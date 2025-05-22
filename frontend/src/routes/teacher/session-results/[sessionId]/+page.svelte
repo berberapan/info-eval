@@ -209,10 +209,6 @@
     {:else}
         <p class="text-center text-lg p-4">Detta scenario innehåller inga övningar.</p>
     {/if}
-
-    <div class="text-center mt-8">
-        <button class="btn btn-primary" on:click={() => goto('/uppgifter')}>Tillbaka till Scenarielistan</button>
-    </div>
   {:else if !isLoading} 
     <div class="text-center py-10 card bg-base-100 shadow-xl p-6">
       <p class="text-xl text-base-content mb-4">Kunde inte ladda all nödvändig data för resultatsidan. Kontrollera att sessionen och övningen existerar.</p>
