@@ -30,6 +30,10 @@
   }
 </script>
 
+<svelte:head>
+  <title>Login</title>
+</svelte:head>
+
 <div class="min-h-screen flex items-center justify-center bg-base-200 p-4">
   <div class="card w-full max-w-sm shadow-2xl bg-base-100">
     <form on:submit|preventDefault={handleLogin} class="card-body">

@@ -104,6 +104,10 @@
 
 </script>
 
+<svelte:head>
+  <title>Resultat</title>
+</svelte:head>
+
 <div class="container mx-auto p-4 md:p-8 min-h-screen bg-base-200 text-base-content">
   {#if isLoading}
     <div class="flex flex-col justify-center items-center h-96">

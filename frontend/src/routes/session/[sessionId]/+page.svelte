@@ -213,6 +213,10 @@
   }
 </script>
 
+<svelte:head>
+  <title>Övning</title>
+</svelte:head>
+
 <div class="container mx-auto p-4 md:p-8 min-h-screen bg-base-200 text-base-content">
   {#if isLoading}
     <div class="flex flex-col justify-center items-center h-96">
@@ -233,16 +237,13 @@
       {#if scenarioData.description}
         <p class="text-lg text-base-content/80">{scenarioData.description}</p>
       {/if}
-      <div class="mt-2 text-sm text-base-content/60">
-        Svårighetsgrad: {scenarioData.difficulty} | Skapad: {new Date(scenarioData.created_at).toLocaleDateString()}
-      </div>
     </div>
 
     {#if currentExercise}
       <div class="card bg-base-100 shadow-xl">
         <div class="card-body">
-          <h2 class="card-title text-2xl mb-1">
-            Övning {currentExercise.order} av {scenarioData.exercises.length}
+          <h2 class="card-title text-sm mb-1">
+            {currentExercise.order} av {scenarioData.exercises.length}
           </h2>
           {#if currentExercise.title}
             <p class="text-lg font-semibold mb-4">{currentExercise.title}</p>
@@ -273,14 +274,8 @@
               <div class="p-4 bg-base-100 rounded-b-lg min-h-72">
                 {#if selectedLeftTab === 0}
                   <div class="prose max-w-none">
-                    {#if currentExercise.exercise_description}
-                      <p class="text-base-content/90">{currentExercise.exercise_description}</p>
-                    {:else}
-                      <p class="text-base-content/70">Ingen beskrivning tillgänglig för denna övning.</p>
-                    {/if}
                     {#if currentExercise.info}
                       <div class="mt-4">
-                        <h3 class="text-lg font-medium">Mer information</h3>
                         <p>{currentExercise.info}</p>
                       </div>
                     {/if}

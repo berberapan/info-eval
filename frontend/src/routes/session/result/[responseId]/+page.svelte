@@ -3,8 +3,8 @@
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
 
-  let scenarioDetails = null; // To store the full scenario structure (exercises, questions, options)
-  let sessionResponseData = null; // To store the specific student's response (raw_answers, ai_feedback)
+  let scenarioDetails = null; 
+  let sessionResponseData = null; 
   let isLoading = true;
   let error = null;
   let currentResponseIdFromUrl = null;
@@ -25,7 +25,6 @@
         throw new Error(errData.error?.message || errData.error || `Failed to fetch session response: ${resResponse.statusText}`);
       }
       const fetchedSessionResponseContainer = await resResponse.json();
-      // Backend returns {"session_response": {...}}
       sessionResponseData = fetchedSessionResponseContainer.session_response;
       if (!sessionResponseData || !sessionResponseData.id) {
         throw new Error("Invalid session response data or missing response ID.");
@@ -89,6 +88,10 @@
 
 </script>
 
+<svelte:head>
+  <title>Resultat</title>
+</svelte:head>
+
 <div class="container mx-auto p-4 md:p-8 min-h-screen bg-base-200 text-base-content">
   {#if isLoading}
     <div class="flex flex-col justify-center items-center h-96">
@@ -96,7 +99,7 @@
       <p class="mt-4 text-xl">Laddar resultat...</p>
     </div>
   {:else if error}
-    <div role="alert" class="alert alert-error">
+    <div role="alert" class="alert alert-error opacity-70">
       <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2 2m2-2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
       <span>Fel: {error}</span>
       <div class="flex gap-2 mt-4">
@@ -152,8 +155,8 @@
 
                   <div class="mt-2 p-3 rounded-md text-sm 
                     { (question.type === 'true_false' || question.type === 'multiple_choice') ? 
-                      (selectedOptionDetails && selectedOptionDetails.is_correct ? 'bg-success/20 text-success-content' : (studentAnswerValue ? 'bg-error/20 text-error-content' : 'bg-base-300/30')) :
-                      (aiFeedbackText && !aiFeedbackText.toLowerCase().startsWith('error:') ? 'bg-info/20 text-info-content' : (aiFeedbackText ? 'bg-warning/20 text-warning-content' : (studentAnswerValue ? 'bg-base-300/30' : 'bg-base-300/30' )))
+                      (selectedOptionDetails && selectedOptionDetails.is_correct ? 'bg-success/70 text-success-content' : (studentAnswerValue ? 'bg-error/70 text-error-content' : 'bg-base-300/30')) :
+                      (aiFeedbackText && !aiFeedbackText.toLowerCase().startsWith('error:') ? 'bg-info/70 text-info-content' : (aiFeedbackText ? 'bg-warning/70 text-warning-content' : (studentAnswerValue ? 'bg-base-300/30' : 'bg-base-300/30' )))
                     }">
                     <strong>Återkoppling:</strong>
                     {#if question.type === 'true_false' || question.type === 'multiple_choice'}
@@ -185,9 +188,6 @@
     {:else}
         <p class="text-center text-lg p-4">Detta scenario innehåller inga övningar.</p>
     {/if}
-    <div class="text-center mt-8">
-        <button class="btn btn-primary" on:click={() => goto('/uppgifter')}>Tillbaka till uppgiftslistan</button>
-    </div>
   {:else}
     <div class="text-center py-10 card bg-base-100 shadow-xl p-6">
       <p class="text-xl text-base-content mb-4">Kunde inte ladda resultatdata. Kontrollera att ID är korrekt och försök igen.</p>
@@ -197,9 +197,9 @@
 
 <style>
   .container {
-    max-width: 900px; /* Or your preferred max-width for results */
+    max-width: 900px; 
   }
   .whitespace-pre-wrap {
-    white-space: pre-wrap; /* Ensures newlines in free text answers/feedback are respected */
+    white-space: pre-wrap; 
   }
 </style>
